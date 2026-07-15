@@ -205,12 +205,13 @@
   .risk .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
   .hl-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px; }
-  .hl-card { border: 1px solid var(--ti-border); border-radius: 12px; background: #fff; padding: 16px; }
-  .hl-card .site { font-weight: 600; font-size: 15px; color: var(--ink); margin: 10px 0 12px; }
-  .hl-card .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .hl-card .metrics div { background: var(--ti-head-bg); border-radius: 8px; padding: 8px 10px; text-align: center; }
-  .hl-card .metrics span { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 2px; }
-  .hl-card .metrics b { font-size: 15px; color: var(--ink); }
+  .hl-card { border: 1px solid var(--ti-border); border-radius: 12px; background: #fff; padding: 14px 16px; }
+  .hl-card .site { font-weight: 600; font-size: 15px; color: var(--ink); margin: 8px 0 9px; }
+  .hl-card .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .hl-card .metrics div { background: var(--ti-head-bg); border-radius: 7px; padding: 5px 10px; text-align: center; }
+  .hl-card .metrics span { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 1px; }
+  .hl-card .metrics b { font-size: 14px; color: var(--ink); }
+  .hl-card .metrics-cm .cm-total { padding: 6px 10px; }
   .hl-card .metrics-cm .cm-total { grid-column: 1 / -1; background: #fef2f2; }
   .hl-card .metrics-cm .cm-total b { color: #dc2626; }
 
@@ -338,6 +339,11 @@
   .recipients.hidden { display: none; }
 
   .footer { flex: 0 0 auto; height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; background: #fff; color: #8797a7; font-size: 11px; border-top: 1px solid #eee; }
+  .footer-variant { display: none; flex: 1 1 auto; align-items: center; justify-content: space-between; }
+  .footer-variant.active { display: flex; }
+  .footer-insight .fi-contact { color: #8797a7; }
+  .footer-insight .fi-contact a { color: #64748b; text-decoration: none; margin-left: 18px; }
+  .footer-insight .fi-contact a:hover { text-decoration: underline; }
   .toast {
     position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: #2e3648; color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 14px;
@@ -380,6 +386,10 @@
   .cm-btn:hover { background: var(--ti-head-bg); }
   .cm-btn svg { width: 14px; height: 14px; }
   .cm-table th, .cm-table td { white-space: nowrap; }
+  .cm-table thead th { padding: 12px 8px; text-align: center; }
+  .cm-table tbody td { padding: 8px; text-align: center; }
+  .cm-pager .pd { display: inline-flex; align-items: center; gap: 6px; }
+  .cm-pager .pd select { border: 1px solid var(--ti-border); border-radius: 7px; padding: 4px 8px; font-size: 13px; color: var(--ti-title); background: #fff; cursor: pointer; }
   .cm-table tbody tr.g-good { background: #f0fdf4; }
   .cm-table tbody tr.g-warn { background: #fffbeb; }
   .cm-table tbody tr.g-poor { background: #fff7ed; }
@@ -658,7 +668,6 @@
             <span class="loc-label"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>기관 선택</span>
             <select class="loc-select" id="locSelMon"></select>
           </div>
-          <div class="cm-banner" id="cmBanner">점검 기준 7개 중 7개 적용</div>
           <div class="kpi-row">
             <div class="kpi"><div class="label">총 기관 수</div><div class="value" id="kpiCmSites"></div><div class="delta up" id="kpiCmSubj"></div></div>
             <div class="kpi"><div class="label">평균 점수</div><div class="value" id="kpiCmAvg"></div><div class="delta" id="kpiCmAvgGrade"></div></div>
@@ -707,7 +716,7 @@
             <div class="card-head">기관별 리스크 시그널</div>
             <div class="matrix-wrap">
               <table class="data-table matrix-table">
-                <thead><tr><th>기관</th><th class="center">리스크 등급</th><th class="num">미작성률</th><th class="num">쿼리 미해결</th><th class="num">방문 지연</th><th class="num">이상치 감지</th></tr></thead>
+                <thead><tr><th>기관</th><th class="center">리스크 등급</th><th class="num">방문일정<br>준수</th><th class="num">필수값<br>누락</th><th class="num">수치<br>이상값</th><th class="num">비정상적<br>변화량</th><th class="num">논리적<br>불일치</th><th class="num">선정/제외<br>위반율</th><th class="num">투약<br>순응도</th></tr></thead>
                 <tbody id="riskTableBody"></tbody>
               </table>
             </div>
@@ -756,7 +765,10 @@
         </div>
       </section>
     </main>
-    <footer class="footer"><span>myTrial Version 2.0 [v2.0.20260629-GA]</span><span>© 2026 NanumSpace, Inc. All rights reserved.</span></footer>
+    <footer class="footer">
+      <div class="footer-variant footer-mytrial active"><span>myTrial Version 2.0 [v2.0.20260629-GA]</span><span>© 2026 NanumSpace, Inc. All rights reserved.</span></div>
+      <div class="footer-variant footer-insight"><span>© 2026 NanumSpace. All rights reserved.</span><span class="fi-contact">For access or questions concerning Trial Insight please contact:<a href="mailto:dheom@nanumspace.com">dheom@nanumspace.com</a><a href="mailto:hgjo@nanumspace.com">hgjo@nanumspace.com</a></span></div>
+    </footer>
   </div>
 </div>
 
@@ -856,6 +868,9 @@ function showPanel(key) {
   document.getElementById("panel-" + key).classList.add("active");
   setContentTitle(key);
   tiUpdate.style.display = (key === "dashboard") ? "none" : "";
+  const insight = key !== "dashboard";
+  document.querySelector(".footer-insight").classList.toggle("active", insight);
+  document.querySelector(".footer-mytrial").classList.toggle("active", !insight);
 }
 
 /* Study Dashboard 메뉴 */
@@ -1067,7 +1082,7 @@ const GMAP = {
 let cmGradeFilter = "전체";
 let cmSearchQ = "";
 let cmPage = 0;
-const CM_PAGE_SIZE = 20;
+let cmPageSize = 20;   // 10 | 20 | 30 | 50 | "all"
 let monView = "scores";
 const cmGradeOf = sc => sc >= 85 ? "정상" : sc >= 78 ? "주의" : "위험";
 const negCell = x => x === 0
@@ -1117,10 +1132,13 @@ function renderCMScores() {
   let rows = list.filter(s => cmGradeFilter === "전체" || s.cm.grade === cmGradeFilter);
   if (q) rows = rows.filter(s => (`${s.c} ${s.n}`).toLowerCase().includes(q));
   const total = rows.length;
-  const pages = Math.max(1, Math.ceil(total / CM_PAGE_SIZE));
+  const sizeAll = cmPageSize === "all";
+  const ps = sizeAll ? Math.max(total, 1) : cmPageSize;
+  const pages = Math.max(1, Math.ceil(total / ps));
   if (cmPage >= pages) cmPage = pages - 1;
-  const from = cmPage * CM_PAGE_SIZE;
-  const pageRows = rows.slice(from, from + CM_PAGE_SIZE);
+  if (cmPage < 0) cmPage = 0;
+  const from = cmPage * ps;
+  const pageRows = rows.slice(from, from + ps);
 
   document.getElementById("cmTableBody").innerHTML = total === 0
     ? `<tr><td colspan="12" style="text-align:center;color:#9ca3af;padding:28px;">데이터가 없습니다</td></tr>`
@@ -1134,14 +1152,19 @@ function renderCMScores() {
         <td class="center"><span class="grade-badge ${gm.badge}">${c.grade}</span></td></tr>`;
     }).join("");
 
-  const to = Math.min(from + CM_PAGE_SIZE, total);
+  const to = Math.min(from + ps, total);
+  const psOptions = [10, 20, 30, 50].map(n => `<option value="${n}" ${cmPageSize === n ? "selected" : ""}>${n}</option>`).join("")
+    + `<option value="all" ${sizeAll ? "selected" : ""}>전체</option>`;
   document.getElementById("cmPager").innerHTML = total === 0 ? "" :
-    `<span>${fmt(total)}개 중 ${total ? from + 1 : 0}–${to} 표시 · 페이지당 ${CM_PAGE_SIZE}</span>
+    `<span>${fmt(total)}개 중 ${total ? from + 1 : 0} - ${to}개 표시</span>
+     <span class="pd">페이지당 <select id="cmPageSel">${psOptions}</select></span>
      <span class="pright">
        <button class="pbtn" id="cmPrev" ${cmPage === 0 ? "disabled" : ""}>이전</button>
        <span>${cmPage + 1} / ${pages}</span>
        <button class="pbtn" id="cmNext" ${cmPage >= pages - 1 ? "disabled" : ""}>다음</button>
      </span>`;
+  const psel = document.getElementById("cmPageSel");
+  if (psel) psel.addEventListener("change", () => { cmPageSize = psel.value === "all" ? "all" : +psel.value; cmPage = 0; renderCMScores(); });
   const prev = document.getElementById("cmPrev"), next = document.getElementById("cmNext");
   if (prev) prev.addEventListener("click", () => { if (cmPage > 0) { cmPage--; renderCMScores(); } });
   if (next) next.addEventListener("click", () => { if (cmPage < pages - 1) { cmPage++; renderCMScores(); } });
@@ -1156,7 +1179,7 @@ function renderMonDetail() {
   const body = document.getElementById("riskTableBody");
   if (mlist.length === 0) {
     hl.innerHTML = "";
-    body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:28px;">관리 필요 기관이 없습니다</td></tr>`;
+    body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:28px;">관리 필요 기관이 없습니다</td></tr>`;
     return;
   }
   hl.innerHTML = mlist.slice(0, 3).map(s => {
@@ -1176,10 +1199,10 @@ function renderMonDetail() {
       </div></div>`;
   }).join("");
   body.innerHTML = mlist.map(s => {
-    const miss = s.due ? (s.od / s.due * 100).toFixed(1) : "0.0";
+    const c = s.cm;
     return `<tr><td>${s.c} ${s.n}</td>
       <td class="center"><span class="risk high"><span class="dot"></span>위험</span></td>
-      <td class="num">${miss}%</td><td class="num">${s.q}건</td><td class="num">${s.d}건</td><td class="num">${s.ol}건</td></tr>`;
+      ${negCell(c.vis)}${negCell(c.req)}${negCell(c.num)}${negCell(c.chg)}${negCell(c.log)}${negCell(c.elig)}${negCell(c.comp)}</tr>`;
   }).join("");
 }
 
