@@ -411,11 +411,25 @@
   .gb-good { background: #dcfce7; color: #15803d; } .gb-warn { background: #fef9c3; color: #a16207; }
   .gb-poor { background: #ffedd5; color: #c2410c; } .gb-bad { background: #fee2e2; color: #dc2626; }
   .cm-pager { display: flex; align-items: center; gap: 10px; padding: 14px 2px 2px; font-size: 13px; color: #6b7280; }
+  /* CM 카드: 내부 요소 대신 카드 자체에 padding 통일 */
+  .cm-card { padding: 16px; }
+  .cm-card .cm-toolbar { padding: 0 0 14px; }
+  .cm-card .matrix-wrap { padding: 0; }
+  .cm-card .cm-pager { padding: 14px 0 0; }
   .cm-pager .pbtn { border: 1px solid var(--ti-border); background: #fff; border-radius: 7px; padding: 5px 13px; cursor: pointer; font-size: 13px; color: #4b5563; }
   .cm-pager .pbtn:disabled { opacity: .4; cursor: default; }
   .cm-pager .pright { margin-left: auto; display: flex; align-items: center; gap: 8px; }
   .mon-back { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--primary); font-size: 13px; font-weight: 500; margin-bottom: 10px; background: none; border: none; padding: 4px 0; }
   .mon-back:hover { text-decoration: underline; }
+  /* 인쇄: CM 점수 테이블 내용만 (사이드바·툴바·페이저 제외) */
+  @media print {
+    body * { visibility: hidden; }
+    #cmPrintArea, #cmPrintArea * { visibility: visible; }
+    #cmPrintArea { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; }
+    #cmPrintArea .cm-toolbar, #cmPrintArea .cm-pager { display: none; }
+    .cm-table tbody tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { margin: 12mm; }
+  }
 </style>
 </head>
 <body>
@@ -688,7 +702,7 @@
           </div>
           <div class="section-label">기관별 CM 점수 현황</div>
           <div class="grade-pills" id="cmPills"></div>
-          <div class="card">
+          <div class="card cm-card" id="cmPrintArea">
             <div class="cm-toolbar">
               <div class="cm-search-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -1092,7 +1106,7 @@ const GMAP = {
 let cmGradeFilter = "전체";
 let cmSearchQ = "";
 let cmPage = 0;
-let cmPageSize = 20;   // 10 | 20 | 30 | 50 | "all"
+let cmPageSize = 10;   // 10 | 20 | 30 | 50 | "all"
 let monView = "scores";
 const cmGradeOf = sc => sc >= 85 ? "정상" : sc >= 78 ? "주의" : "위험";
 const negCell = x => x === 0
