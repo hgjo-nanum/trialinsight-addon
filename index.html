@@ -211,6 +211,8 @@
   .hl-card .metrics div { background: var(--ti-head-bg); border-radius: 8px; padding: 8px 10px; text-align: center; }
   .hl-card .metrics span { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 2px; }
   .hl-card .metrics b { font-size: 15px; color: var(--ink); }
+  .hl-card .metrics-cm .cm-total { grid-column: 1 / -1; background: #fef2f2; }
+  .hl-card .metrics-cm .cm-total b { color: #dc2626; }
 
   /* ---------- Newsletter ---------- */
   .news-head { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 12px; }
@@ -663,7 +665,7 @@
             <div class="kpi"><div class="label">등급 분포</div><div class="kpi-grades" id="kpiCmDist"></div></div>
             <div class="kpi bad clickable" id="kpiCmManage" role="button" tabindex="0">
               <div class="label">관리 필요 기관</div><div class="value" id="kpiCmManageN"></div>
-              <div class="delta down go-hint">미흡·심각 · 클릭 시 상세 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+              <div class="delta down go-hint">위험 등급 · 클릭 시 상세 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
             </div>
           </div>
           <div class="section-label">기관별 CM 점수 현황</div>
@@ -699,7 +701,7 @@
         <!-- 뷰 B · 관리 필요 기관 상세 -->
         <div id="mon-detail" style="display:none;">
           <button class="mon-back" id="monBack"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>CM 점수 현황으로</button>
-          <div class="section-label">관리 필요 기관 (미흡·심각)</div>
+          <div class="section-label">관리 필요 기관 (위험 등급)</div>
           <div class="hl-row" id="riskHighlight"></div>
           <div class="card">
             <div class="card-head">기관별 리스크 시그널</div>
@@ -1086,11 +1088,11 @@ function renderMonitoring() {
 
 function renderCMScores() {
   const list = filteredSites();
-  const counts = { 양호: 0, 주의: 0, 미흡: 0, 심각: 0 };
+  const counts = { 정상: 0, 주의: 0, 위험: 0 };
   let subjSum = 0, scoreSum = 0;
   list.forEach(s => { counts[s.cm.grade]++; subjSum += s.e; scoreSum += s.cm.score; });
   const avg = list.length ? scoreSum / list.length : 0;
-  const manage = counts["미흡"] + counts["심각"];
+  const manage = counts["위험"];
 
   document.getElementById("kpiCmSites").innerHTML = `${fmt(list.length)}<small> 개</small>`;
   document.getElementById("kpiCmSubj").textContent = `대상자 ${fmt(subjSum)}명`;
@@ -1146,9 +1148,8 @@ function renderCMScores() {
 }
 
 function renderMonDetail() {
-  const lbl = { "심각": "상", "미흡": "중" };
-  const cls = { "심각": "high", "미흡": "mid" };
-  const mlist = filteredSites().filter(s => s.cm.grade === "미흡" || s.cm.grade === "심각")
+  const nd = x => x === 0 ? "0" : (Number.isInteger(x) ? String(x) : x.toFixed(1));
+  const mlist = filteredSites().filter(s => s.cm.grade === "위험")
     .sort((x, y) => x.cm.score - y.cm.score || siteScore(y) - siteScore(x));
 
   const hl = document.getElementById("riskHighlight");
@@ -1159,21 +1160,25 @@ function renderMonDetail() {
     return;
   }
   hl.innerHTML = mlist.slice(0, 3).map(s => {
-    const miss = s.due ? (s.od / s.due * 100).toFixed(1) : "0.0";
+    const c = s.cm;
     return `<div class="hl-card">
-      <span class="risk ${cls[s.cm.grade]}"><span class="dot"></span>${s.cm.grade} · CM ${s.cm.score.toFixed(0)}점</span>
+      <span class="risk high"><span class="dot"></span>위험 · CM ${c.score.toFixed(0)}점</span>
       <div class="site">${s.c} ${s.n}</div>
-      <div class="metrics">
-        <div><span>미작성률</span><b>${miss}%</b></div>
-        <div><span>쿼리 미해결</span><b>${s.q}건</b></div>
-        <div><span>방문 지연</span><b>${s.d}건</b></div>
-        <div><span>이상치 감지</span><b>${s.ol}건</b></div>
+      <div class="metrics metrics-cm">
+        <div><span>방문일정 준수</span><b>${nd(c.vis)}</b></div>
+        <div><span>필수값 누락</span><b>${nd(c.req)}</b></div>
+        <div><span>수치 이상값</span><b>${nd(c.num)}</b></div>
+        <div><span>비정상적 변화량</span><b>${nd(c.chg)}</b></div>
+        <div><span>논리적 불일치</span><b>${nd(c.log)}</b></div>
+        <div><span>선정/제외 위반율</span><b>${nd(c.elig)}</b></div>
+        <div><span>투약 순응도</span><b>${nd(c.comp)}</b></div>
+        <div class="cm-total"><span>총 감점 / 점수</span><b>${nd(c.total)} · ${c.score.toFixed(0)}점</b></div>
       </div></div>`;
   }).join("");
   body.innerHTML = mlist.map(s => {
     const miss = s.due ? (s.od / s.due * 100).toFixed(1) : "0.0";
     return `<tr><td>${s.c} ${s.n}</td>
-      <td class="center"><span class="risk ${cls[s.cm.grade]}"><span class="dot"></span>${lbl[s.cm.grade]}</span></td>
+      <td class="center"><span class="risk high"><span class="dot"></span>위험</span></td>
       <td class="num">${miss}%</td><td class="num">${s.q}건</td><td class="num">${s.d}건</td><td class="num">${s.ol}건</td></tr>`;
   }).join("");
 }
