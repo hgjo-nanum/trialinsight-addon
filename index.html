@@ -211,6 +211,9 @@
   .hl-card .metrics div { background: var(--ti-head-bg); border-radius: 7px; padding: 5px 10px; text-align: center; }
   .hl-card .metrics span { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 1px; }
   .hl-card .metrics b { font-size: 14px; color: var(--ink); }
+  .hl-card .metrics-cm { grid-template-columns: repeat(4, 1fr); }
+  .hl-card .metrics-cm div { padding: 6px 6px; }
+  .hl-card .metrics-cm span { font-size: 10.5px; line-height: 1.25; word-break: keep-all; }
   .hl-card .metrics-cm .cm-total { padding: 6px 10px; }
   .hl-card .metrics-cm .cm-total { grid-column: 1 / -1; background: #fef2f2; }
   .hl-card .metrics-cm .cm-total b { color: #dc2626; }
@@ -229,6 +232,12 @@
   .epro-panel.active { display: block; }
   .note-bar { background: var(--primary-soft); border: 1px solid #BFDBFE; color: var(--ti-title); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; }
   .matrix-wrap { max-height: 430px; overflow-y: auto; padding: 0 16px 12px; scrollbar-width: thin; scrollbar-color: #d1d5db transparent; }
+  .matrix-wrap.flow { max-height: none; overflow: visible; }
+  /* 리스크 시그널 카드: 여백은 카드에만, 내부 요소는 인셋 제거 */
+  .risk-card { padding: 18px 20px; }
+  .risk-card .card-head { margin: 0 0 14px; padding: 0 0 12px; }
+  .risk-card .matrix-wrap { padding: 0; }
+  .risk-card .cm-pager { padding: 14px 0 0; }
   .matrix-wrap::-webkit-scrollbar { width: 4px; }
   .matrix-wrap::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
 
@@ -386,8 +395,8 @@
   .cm-btn:hover { background: var(--ti-head-bg); }
   .cm-btn svg { width: 14px; height: 14px; }
   .cm-table th, .cm-table td { white-space: nowrap; }
-  .cm-table thead th { padding: 12px 8px; text-align: center; }
-  .cm-table tbody td { padding: 8px; text-align: center; }
+  .cm-table thead th { padding: 12px 8px; text-align: center; font-size: 12px; }
+  .cm-table tbody td { padding: 8px; text-align: center; font-size: 12px; border-bottom: none; }
   .cm-pager .pd { display: inline-flex; align-items: center; gap: 6px; }
   .cm-pager .pd select { border: 1px solid var(--ti-border); border-radius: 7px; padding: 4px 8px; font-size: 13px; color: var(--ti-title); background: #fff; cursor: pointer; }
   .cm-table tbody tr.g-good { background: #f0fdf4; }
@@ -691,7 +700,7 @@
                 <button class="cm-btn" id="cmPrint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>Print</button>
               </div>
             </div>
-            <div class="matrix-wrap">
+            <div class="matrix-wrap flow">
               <table class="data-table cm-table">
                 <thead><tr>
                   <th>기관코드</th><th class="num">대상자수</th>
@@ -712,14 +721,15 @@
           <button class="mon-back" id="monBack"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>CM 점수 현황으로</button>
           <div class="section-label">관리 필요 기관 (위험 등급)</div>
           <div class="hl-row" id="riskHighlight"></div>
-          <div class="card">
+          <div class="card risk-card">
             <div class="card-head">기관별 리스크 시그널</div>
-            <div class="matrix-wrap">
+            <div class="matrix-wrap flow">
               <table class="data-table matrix-table">
                 <thead><tr><th>기관</th><th class="center">리스크 등급</th><th class="num">방문일정<br>준수</th><th class="num">필수값<br>누락</th><th class="num">수치<br>이상값</th><th class="num">비정상적<br>변화량</th><th class="num">논리적<br>불일치</th><th class="num">선정/제외<br>위반율</th><th class="num">투약<br>순응도</th></tr></thead>
                 <tbody id="riskTableBody"></tbody>
               </table>
             </div>
+            <div class="cm-pager" id="riskPager"></div>
           </div>
         </div>
       </section>
@@ -1170,6 +1180,7 @@ function renderCMScores() {
   if (next) next.addEventListener("click", () => { if (cmPage < pages - 1) { cmPage++; renderCMScores(); } });
 }
 
+let riskPage = 0, riskPageSize = 10;
 function renderMonDetail() {
   const nd = x => x === 0 ? "0" : (Number.isInteger(x) ? String(x) : x.toFixed(1));
   const mlist = filteredSites().filter(s => s.cm.grade === "위험")
@@ -1180,6 +1191,7 @@ function renderMonDetail() {
   if (mlist.length === 0) {
     hl.innerHTML = "";
     body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:28px;">관리 필요 기관이 없습니다</td></tr>`;
+    document.getElementById("riskPager").innerHTML = "";
     return;
   }
   hl.innerHTML = mlist.slice(0, 3).map(s => {
@@ -1198,12 +1210,37 @@ function renderMonDetail() {
         <div class="cm-total"><span>총 감점 / 점수</span><b>${nd(c.total)} · ${c.score.toFixed(0)}점</b></div>
       </div></div>`;
   }).join("");
-  body.innerHTML = mlist.map(s => {
+  const total = mlist.length;
+  const sizeAll = riskPageSize === "all";
+  const ps = sizeAll ? Math.max(total, 1) : riskPageSize;
+  const pages = Math.max(1, Math.ceil(total / ps));
+  if (riskPage >= pages) riskPage = pages - 1;
+  if (riskPage < 0) riskPage = 0;
+  const from = riskPage * ps;
+  const to = Math.min(from + ps, total);
+
+  body.innerHTML = mlist.slice(from, from + ps).map(s => {
     const c = s.cm;
     return `<tr><td>${s.c} ${s.n}</td>
       <td class="center"><span class="risk high"><span class="dot"></span>위험</span></td>
       ${negCell(c.vis)}${negCell(c.req)}${negCell(c.num)}${negCell(c.chg)}${negCell(c.log)}${negCell(c.elig)}${negCell(c.comp)}</tr>`;
   }).join("");
+
+  const psOptions = [10, 20, 30, 50].map(n => `<option value="${n}" ${riskPageSize === n ? "selected" : ""}>${n}</option>`).join("")
+    + `<option value="all" ${sizeAll ? "selected" : ""}>전체</option>`;
+  document.getElementById("riskPager").innerHTML =
+    `<span>${fmt(total)}개 중 ${from + 1} - ${to}개 표시</span>
+     <span class="pd">페이지당 <select id="riskPageSel">${psOptions}</select></span>
+     <span class="pright">
+       <button class="pbtn" id="riskPrev" ${riskPage === 0 ? "disabled" : ""}>이전</button>
+       <span>${riskPage + 1} / ${pages}</span>
+       <button class="pbtn" id="riskNext" ${riskPage >= pages - 1 ? "disabled" : ""}>다음</button>
+     </span>`;
+  const rpsel = document.getElementById("riskPageSel");
+  if (rpsel) rpsel.addEventListener("change", () => { riskPageSize = rpsel.value === "all" ? "all" : +rpsel.value; riskPage = 0; renderMonDetail(); });
+  const rprev = document.getElementById("riskPrev"), rnext = document.getElementById("riskNext");
+  if (rprev) rprev.addEventListener("click", () => { if (riskPage > 0) { riskPage--; renderMonDetail(); } });
+  if (rnext) rnext.addEventListener("click", () => { if (riskPage < pages - 1) { riskPage++; renderMonDetail(); } });
 }
 
 /* CM 화면 정적 이벤트 (1회 바인딩) */
