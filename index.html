@@ -312,13 +312,14 @@
   .epro-dash .ed-card .cap { color:var(--edmuted); font-size:11px; margin:2px 0 10px; }
   .epro-dash .c3 { grid-column:span 3; } .epro-dash .c4 { grid-column:span 4; }
   .epro-dash .c6 { grid-column:span 6; } .epro-dash .c8 { grid-column:span 8; } .epro-dash .c12 { grid-column:span 12; }
-  .epro-dash .ed-kpi { display:flex; flex-direction:column; gap:2px; }
-  .epro-dash .ed-kpi .lab { color:var(--edink2); font-size:11.5px; font-weight:600; }
-  .epro-dash .ed-kpi .val { font-weight:700; letter-spacing:-.02em; line-height:1.05; font-size:30px; color:#111827; }
-  .epro-dash .ed-kpi .val .u { font-size:13px; color:var(--edmuted); font-weight:600; margin-left:3px; }
-  .epro-dash .ed-kpi.hero .val { font-size:38px; }
-  .epro-dash .ed-kpi .delta { font-size:11px; font-weight:600; margin-top:3px; color:var(--edgood); }
-  .epro-dash .ed-kpi .foot { font-size:10.5px; color:var(--edmuted); margin-top:1px; }
+  /* KPI 카드: 발송·작성 현황(.kpi)과 동일 형식으로 통일 */
+  .epro-dash .ed-kpi { display:block; padding:16px 18px; }
+  .epro-dash .ed-kpi .lab { font-size:13px; font-weight:400; color:var(--ink-soft); margin-bottom:8px; }
+  .epro-dash .ed-kpi .val { font-size:26px; font-weight:700; color:var(--ink); letter-spacing:-.5px; line-height:1.15; }
+  .epro-dash .ed-kpi.hero .val { font-size:26px; }
+  .epro-dash .ed-kpi .val .u { font-size:13px; font-weight:500; color:var(--ink-soft); margin-left:2px; }
+  .epro-dash .ed-kpi .delta { font-size:12px; font-weight:400; margin-top:6px; color:var(--green-tx); }
+  .epro-dash .ed-kpi .foot { font-size:12px; color:var(--ink-soft); margin-top:4px; }
   .epro-dash svg { display:block; width:100%; height:auto; overflow:visible; }
   .epro-dash .ax { font-size:10px; fill:var(--edmuted); }
   .epro-dash .ax-y { font-variant-numeric:tabular-nums; }
@@ -449,6 +450,11 @@
   .cm-btn svg { width: 14px; height: 14px; }
   .cm-table th, .cm-table td { white-space: nowrap; }
   .cm-table thead th { padding: 12px 8px; text-align: center; font-size: 12px; }
+  .cm-table th.sortable { cursor: pointer; user-select: none; }
+  .cm-table th.sortable:hover { color: var(--primary); }
+  .cm-table th.sortable::after { content: "↕"; opacity: .35; margin-left: 3px; font-size: 10px; }
+  .cm-table th.sorted-asc::after { content: "↑"; opacity: 1; color: var(--primary); }
+  .cm-table th.sorted-desc::after { content: "↓"; opacity: 1; color: var(--primary); }
   .cm-table tbody td { padding: 8px; text-align: center; font-size: 12px; border-bottom: none; }
   .cm-pager .pd { display: inline-flex; align-items: center; gap: 6px; }
   .cm-pager .pd select { border: 1px solid var(--ti-border); border-radius: 7px; padding: 4px 8px; font-size: 13px; color: var(--ti-title); background: #fff; cursor: pointer; }
@@ -769,11 +775,11 @@
             <div class="matrix-wrap flow">
               <table class="data-table cm-table">
                 <thead><tr>
-                  <th>기관코드</th><th class="num">대상자수</th>
-                  <th class="num">방문일정<br>준수</th><th class="num">필수값<br>누락</th><th class="num">수치<br>이상값</th>
-                  <th class="num">비정상적<br>변화량</th><th class="num">논리적<br>불일치</th>
-                  <th class="num">선정/제외<br>위반율</th>
-                  <th class="num">총 감점</th><th class="num">최종 점수</th><th class="center">등급</th>
+                  <th class="sortable" data-sort="code">기관코드</th><th class="num sortable" data-sort="e">대상자수</th>
+                  <th class="num sortable" data-sort="vis">방문일정<br>준수</th><th class="num sortable" data-sort="req">필수값<br>누락</th><th class="num sortable" data-sort="num">수치<br>이상값</th>
+                  <th class="num sortable" data-sort="chg">비정상적<br>변화량</th><th class="num sortable" data-sort="log">논리적<br>불일치</th>
+                  <th class="num sortable" data-sort="elig">선정/제외<br>위반율</th>
+                  <th class="num sortable" data-sort="total">총 감점</th><th class="num sortable" data-sort="score">최종 점수</th><th class="center sortable" data-sort="grade">등급</th>
                 </tr></thead>
                 <tbody id="cmTableBody"></tbody>
               </table>
@@ -1218,7 +1224,14 @@ const GMAP = {
 let cmGradeFilter = "전체";
 let cmSearchQ = "";
 let cmPage = 0;
-let cmPageSize = 10;   // 10 | 20 | 30 | 50 | "all"
+let cmPageSize = 20;   // 10 | 20 | 30 | 50 | "all"
+let cmSortKey = null, cmSortDir = "asc";
+const SORT_ACC = {
+  code: s => s.c, e: s => s.e,
+  vis: s => s.cm.vis, req: s => s.cm.req, num: s => s.cm.num, chg: s => s.cm.chg, log: s => s.cm.log, elig: s => s.cm.elig,
+  total: s => s.cm.total, score: s => s.cm.score,
+  grade: s => ({ "정상": 0, "주의": 1, "위험": 2 })[s.cm.grade],
+};
 const cmGradeOf = sc => sc >= 85 ? "정상" : sc >= 78 ? "주의" : "위험";
 const negCell = x => x === 0
   ? `<td class="num zero">0</td>`
@@ -1266,6 +1279,14 @@ function renderCMScores() {
   const q = cmSearchQ.trim().toLowerCase();
   let rows = list.filter(s => cmGradeFilter === "전체" || s.cm.grade === cmGradeFilter);
   if (q) rows = rows.filter(s => (`${s.c} ${s.n}`).toLowerCase().includes(q));
+  if (cmSortKey && SORT_ACC[cmSortKey]) {
+    const acc = SORT_ACC[cmSortKey];
+    rows = rows.slice().sort((a, b) => {
+      const x = acc(a), y = acc(b);
+      const c = typeof x === "string" ? x.localeCompare(y) : x - y;
+      return cmSortDir === "asc" ? c : -c;
+    });
+  }
   const total = rows.length;
   const sizeAll = cmPageSize === "all";
   const ps = sizeAll ? Math.max(total, 1) : cmPageSize;
@@ -1304,6 +1325,12 @@ function renderCMScores() {
   if (prev) prev.addEventListener("click", () => { if (cmPage > 0) { cmPage--; renderCMScores(); } });
   if (next) next.addEventListener("click", () => { if (cmPage < pages - 1) { cmPage++; renderCMScores(); } });
 
+  // 정렬 방향 표시(헤더 화살표)
+  document.querySelectorAll("#panel-monitoring .cm-table th.sortable").forEach(th => {
+    th.classList.remove("sorted-asc", "sorted-desc");
+    if (th.dataset.sort === cmSortKey) th.classList.add(cmSortDir === "asc" ? "sorted-asc" : "sorted-desc");
+  });
+
   renderTopCards();
 }
 
@@ -1336,6 +1363,14 @@ function renderTopCards() {
 /* CM 화면 정적 이벤트 (1회 바인딩) */
 function initMonitoringUI() {
   document.getElementById("cmSearch").addEventListener("input", e => { cmSearchQ = e.target.value; cmPage = 0; renderCMScores(); });
+  document.querySelectorAll("#panel-monitoring .cm-table th.sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      const k = th.dataset.sort;
+      if (cmSortKey === k) cmSortDir = cmSortDir === "asc" ? "desc" : "asc";
+      else { cmSortKey = k; cmSortDir = "asc"; }
+      cmPage = 0; renderCMScores();
+    });
+  });
   const exportCsv = () => {
     const list = filteredSites().filter(s => cmGradeFilter === "전체" || s.cm.grade === cmGradeFilter);
     const head = ["기관코드","기관명","대상자수","방문일정준수","필수값누락","수치이상값","비정상적변화량","논리적불일치","선정제외위반율","총감점","최종점수","등급"];
