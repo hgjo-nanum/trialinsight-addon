@@ -453,11 +453,8 @@
   .cm-table tbody td { padding: 8px; text-align: center; font-size: 12px; border-bottom: none; }
   .cm-pager .pd { display: inline-flex; align-items: center; gap: 6px; }
   .cm-pager .pd select { border: 1px solid var(--ti-border); border-radius: 7px; padding: 4px 8px; font-size: 13px; color: var(--ti-title); background: #fff; cursor: pointer; }
-  .cm-table tbody tr.g-good { background: #f0fdf4; }
-  .cm-table tbody tr.g-warn { background: #fffbeb; }
-  .cm-table tbody tr.g-poor { background: #fff7ed; }
-  .cm-table tbody tr.g-bad  { background: #fef2f2; }
-  .cm-table tbody tr:hover { filter: brightness(.975); }
+  .cm-table tbody tr { background: #fff; }
+  .cm-table tbody tr:hover { background: var(--ti-head-bg); }
   .cm-table td.code { color: var(--primary); font-weight: 500; }
   .cm-table td.zero { color: #cbd5e1; }
   .cm-table td.score { font-weight: 700; color: var(--ti-title); }
@@ -1215,9 +1212,9 @@ function siteScore(s) {
 /* 표준안 RAG 3단계 (정상/주의/위험) */
 const CM_GRADES = ["정상", "주의", "위험"];
 const GMAP = {
-  "정상": { row: "g-good", badge: "gb-good", dot: "#22c55e", rng: "85점↑" },
-  "주의": { row: "g-warn", badge: "gb-warn", dot: "#eab308", rng: "78–84" },
-  "위험": { row: "g-bad",  badge: "gb-bad",  dot: "#ef4444", rng: "~77" },
+  "정상": { row: "g-good", badge: "gb-good", dot: "#22c55e", tx: "#15803d", soft: "#bbf7d0", rng: "85점↑" },
+  "주의": { row: "g-warn", badge: "gb-warn", dot: "#eab308", tx: "#a16207", soft: "#fde68a", rng: "78–84" },
+  "위험": { row: "g-bad",  badge: "gb-bad",  dot: "#ef4444", tx: "#dc2626", soft: "#fecaca", rng: "~77" },
 };
 let cmGradeFilter = "전체";
 let cmSearchQ = "";
@@ -1255,7 +1252,14 @@ function renderCMScores() {
   document.getElementById("cmPills").innerHTML =
     `<span class="flabel">등급 필터</span>` +
     `<button class="grade-pill ${cmGradeFilter === "전체" ? "active" : ""}" data-g="전체">전체<span class="n">${list.length}</span></button>` +
-    CM_GRADES.map(g => `<button class="grade-pill ${cmGradeFilter === g ? "active" : ""}" data-g="${g}">${g}<span class="n">${counts[g]}</span></button>`).join("");
+    CM_GRADES.map(g => {
+      const c = GMAP[g], on = cmGradeFilter === g;
+      const st = on
+        ? `background:${c.dot};color:#fff;border-color:${c.dot};`
+        : `color:${c.tx};border-color:${c.soft};`;
+      const nCol = on ? "rgba(255,255,255,.85)" : c.dot;
+      return `<button class="grade-pill" data-g="${g}" style="${st}">${g}<span class="n" style="color:${nCol}">${counts[g]}</span></button>`;
+    }).join("");
   document.querySelectorAll("#cmPills .grade-pill").forEach(b =>
     b.addEventListener("click", () => { cmGradeFilter = b.dataset.g; cmPage = 0; renderCMScores(); }));
 
