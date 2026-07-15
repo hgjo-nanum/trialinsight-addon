@@ -717,7 +717,7 @@
         <div class="epro-panel" id="epro-results">
           <div class="epro-dash">
             <div class="ed-grid">
-              <div class="ed-card ed-kpi hero c3"><div class="lab">유효성 평가 대상자군</div><div class="val" id="edKpiN">–</div><div class="foot">안전성 평가군 6,540명 · 등록 6,842명</div></div>
+              <div class="ed-card ed-kpi hero c3"><div class="lab">유효성 평가 대상자군</div><div class="val" id="edKpiN">–</div><div class="foot" id="edKpiNFoot">안전성 평가군 6,540명 · 등록 6,842명</div></div>
               <div class="ed-card ed-kpi c3"><div class="lab">12주 소화성궤양 증상 발생률</div><div class="val" id="edKpiOcc">–</div><div class="delta" id="edKpiOccD"></div><div class="foot">베이스라인 대비 신규·악화</div></div>
               <div class="ed-card ed-kpi c3"><div class="lab">12주 증상 Total Score</div><div class="val" id="edKpiTotal">–</div><div class="delta" id="edKpiTotalD"></div><div class="foot">8개 증상 문항 합계 (낮을수록 양호)</div></div>
               <div class="ed-card ed-kpi c3"><div class="lab">12주 전반적 만족도</div><div class="val" id="edKpiSat">–</div><div class="delta" id="edKpiSatD"></div><div class="foot">문항 10 · 높을수록 만족</div></div>
@@ -1086,20 +1086,40 @@ function renderEproStatus() {
 /* ePRO 결과 요약 대시보드 (docs/ePRO결과요약_대시보드_예시 이식 · 인라인 SVG · 예시 더미 데이터) */
 const EPRO_DASH = (function () {
   const TP = ["Baseline", "2주", "4주", "8주", "12주"];
-  const SYMPTOMS = [
+  const SYMPTOMS_BASE = [
     { n: "상복부 통증", b: 1.6, alarm: false }, { n: "속쓰림", b: 2.1, alarm: false },
     { n: "산역류", b: 1.8, alarm: false }, { n: "공복통", b: 1.4, alarm: false },
     { n: "오심", b: 1.1, alarm: false }, { n: "야간 통증", b: 1.3, alarm: false },
     { n: "변 이상", b: 0.3, alarm: true }, { n: "체중 감소", b: 0.2, alarm: true },
   ];
-  const SATIS = [
+  const SATIS_BASE = [
     { n: "위장 불편으로 인한 미복용 빈도", vals: [3.4, 3.8, 4.1, 4.3, 4.5] },
     { n: "전반적 만족도", vals: [3.1, 3.7, 4.0, 4.3, 4.5] },
   ];
   const SYM_DECAY = [1.00, 0.72, 0.55, 0.42, 0.33], ALARM_DECAY = [1.00, 0.95, 0.90, 0.88, 0.85];
-  const OCC = [null, 8.4, 6.7, 5.2, 4.1];
-  const symMean = SYMPTOMS.map(s => (s.alarm ? ALARM_DECAY : SYM_DECAY).map(f => +(s.b * f).toFixed(2)));
-  const total = TP.map((_, t) => +symMean.reduce((a, row) => a + row[t], 0).toFixed(1));
+  const OCC_BASE = [null, 8.4, 6.7, 5.2, 4.1];
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const niceTop = (x, min, step) => Math.max(min, Math.ceil(x / step) * step);
+  const ticksTo = (top, step) => { const a = []; for (let v = 0; v <= top + 1e-9; v += step) a.push(+v.toFixed(2)); return a; };
+  /* 선택 기관에 따라 데이터가 달라지도록 기관 코드 기반 결정적 변주(더미) */
+  let SYMPTOMS, SATIS, OCC, symMean, total, kpiN, kpiSafe, kpiEnr;
+  function computeData() {
+    let f = 1, fsat = 1;
+    if (selectedSite !== "전체 기관") {
+      let h = 0; const c = String(selectedSite);
+      for (let i = 0; i < c.length; i++) h = (h * 31 + c.charCodeAt(i)) >>> 0;
+      const seed = (h % 1000) / 1000;
+      f = 0.7 + seed * 0.6;        // 증상 심각도 배수 (0.7~1.3)
+      fsat = 1.12 - seed * 0.28;   // 만족도 배수 (반대 경향)
+    }
+    SYMPTOMS = SYMPTOMS_BASE.map(s => ({ ...s, b: clamp(+(s.b * f).toFixed(2), 0, 4) }));
+    SATIS = SATIS_BASE.map(s => ({ ...s, vals: s.vals.map(v => clamp(+(v * fsat).toFixed(2), 1, 5)) }));
+    OCC = OCC_BASE.map(v => v == null ? null : clamp(+(v * f).toFixed(1), 0, 12));
+    symMean = SYMPTOMS.map(s => (s.alarm ? ALARM_DECAY : SYM_DECAY).map(k => +(s.b * k).toFixed(2)));
+    total = TP.map((_, t) => +symMean.reduce((a, row) => a + row[t], 0).toFixed(1));
+    const agg = aggSites(filteredSites());
+    kpiEnr = agg.e; kpiSafe = Math.round(agg.e * 0.955); kpiN = Math.round(agg.e * 0.907);
+  }
   const SCALE_SYM = ["전혀 없음", "약함", "중간", "심함", "매우 심함"];
   const SCALE_Q9 = ["전혀 없었음", "거의 없었음", "가끔 있었음", "자주 있었음", "매우 자주 있었음"];
   const SCALE_Q10 = ["매우 만족", "약간 만족", "보통", "약간 불만족", "매우 불만족"];
@@ -1124,7 +1144,7 @@ const EPRO_DASH = (function () {
   const clear = id => { const e = document.getElementById(id); if (e) e.innerHTML = ""; };
   function occBars() {
     const svg = document.getElementById("edOccBars"); const W = 520, H = 224, m = { t: 22, r: 14, b: 28, l: 34 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
-    const data = [1, 2, 3, 4].map(i => ({ v: OCC[i], lab: TP[i] })); const ymax = 10, yticks = [0, 2, 4, 6, 8, 10]; const y = v => m.t + ph - v / ymax * ph; const step = pw / data.length, bw = 62;
+    const data = [1, 2, 3, 4].map(i => ({ v: OCC[i], lab: TP[i] })); const ymax = niceTop(Math.max(...data.map(d => d.v)), 10, 2), yticks = ticksTo(ymax, 2); const y = v => m.t + ph - v / ymax * ph; const step = pw / data.length, bw = 62;
     yticks.forEach(tk => { svg.appendChild(mk("line", { x1: m.l, y1: y(tk), x2: m.l + pw, y2: y(tk), class: "grid-line" })); const t = mk("text", { x: m.l - 6, y: y(tk) + 3, "text-anchor": "end", class: "ax ax-y" }); t.textContent = tk; svg.appendChild(t); });
     svg.appendChild(mk("line", { x1: m.l, y1: y(0), x2: m.l + pw, y2: y(0), class: "baseline" }));
     data.forEach((d, i) => { const cx = m.l + step * i + step / 2, x0 = cx - bw / 2, h = d.v / ymax * ph; const r = mk("rect", { x: x0, y: y(d.v), width: bw, height: h, rx: 4, fill: "var(--s1)" }); svg.appendChild(r); bindTip(r, `<b>${d.lab}</b> · 증상 발생률 (Baseline 대비)<br><span class="sw" style="background:var(--s1)"></span>${d.v}%`); const t = mk("text", { x: cx, y: y(d.v) - 6, "text-anchor": "middle", class: "val-lbl" }); t.textContent = d.v + "%"; svg.appendChild(t); const lb = mk("text", { x: cx, y: H - 9, "text-anchor": "middle", class: "ax" }); lb.textContent = d.lab; svg.appendChild(lb); });
@@ -1146,7 +1166,7 @@ const EPRO_DASH = (function () {
   }
   function totalBars() {
     const svg = document.getElementById("edTotalBars"); const W = 340, H = 300, m = { t: 18, r: 12, b: 30, l: 30 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
-    const ymax = 10, yticks = [0, 2, 4, 6, 8, 10]; const y = v => m.t + ph - v / ymax * ph; const step = pw / TP.length, bw = 40;
+    const ymax = niceTop(Math.max(...total), 10, 2), yticks = ticksTo(ymax, 2); const y = v => m.t + ph - v / ymax * ph; const step = pw / TP.length, bw = 40;
     yticks.forEach(tk => { svg.appendChild(mk("line", { x1: m.l, y1: y(tk), x2: m.l + pw, y2: y(tk), class: "grid-line" })); const t = mk("text", { x: m.l - 6, y: y(tk) + 3, "text-anchor": "end", class: "ax ax-y" }); t.textContent = tk; svg.appendChild(t); });
     svg.appendChild(mk("line", { x1: m.l, y1: y(0), x2: m.l + pw, y2: y(0), class: "baseline" }));
     total.forEach((v, i) => { const cx = m.l + step * i + step / 2, x0 = cx - bw / 2, h = v / ymax * ph; const r = mk("rect", { x: x0, y: y(v), width: bw, height: h, rx: 4, fill: "var(--s1)" }); svg.appendChild(r); bindTip(r, `<b>${TP[i]}</b> · Total Score<br><span class="sw" style="background:var(--s1)"></span>${v.toFixed(1)} / 32`); const t = mk("text", { x: cx, y: y(v) - 5, "text-anchor": "middle", class: "val-lbl" }); t.textContent = v.toFixed(1); svg.appendChild(t); const lb = mk("text", { x: cx, y: H - 8, "text-anchor": "middle", class: "ax" }); lb.textContent = TP[i]; svg.appendChild(lb); });
@@ -1180,7 +1200,8 @@ const EPRO_DASH = (function () {
     SATIS.forEach((s, i) => { const d = document.createElement("span"); d.className = "it"; d.innerHTML = `<span class="key" style="background:${cols[i]}"></span>${s.n}`; stl.appendChild(d); });
   }
   function kpis() {
-    document.getElementById("edKpiN").innerHTML = `6,210<span class="u">명</span>`;
+    document.getElementById("edKpiN").innerHTML = `${fmt(kpiN)}<span class="u">명</span>`;
+    const foot = document.getElementById("edKpiNFoot"); if (foot) foot.textContent = `안전성 평가군 ${fmt(kpiSafe)}명 · 등록 ${fmt(kpiEnr)}명`;
     document.getElementById("edKpiOcc").textContent = OCC[4] + "%";
     document.getElementById("edKpiOccD").textContent = "▼ " + (OCC[1] - OCC[4]).toFixed(1) + "%p vs 2주";
     document.getElementById("edKpiTotal").innerHTML = total[4].toFixed(1) + `<span class="u">/ 32</span>`;
@@ -1189,9 +1210,11 @@ const EPRO_DASH = (function () {
     document.getElementById("edKpiSatD").textContent = "▲ " + (SATIS[1].vals[4] - SATIS[1].vals[0]).toFixed(1) + " vs Baseline";
   }
   function draw() {
+    computeData();
     ["edSymLines", "edTotalBars", "edOccBars", "edSatChart", "edSymLegend", "edSatLegend", "edLkLegend", "edLikert"].forEach(clear);
     occBars();
-    lineChart("edSymLines", SYMPTOMS.map((s, i) => ({ name: s.n, color: SERIES[i], vals: symMean[i] })), { ymin: 0, ymax: 2.5, yticks: [0, 0.5, 1.0, 1.5, 2.0, 2.5], dec: 2, mt: 18, mb: 30 });
+    const symTop = niceTop(Math.max(...symMean.flat()), 2.5, 0.5);
+    lineChart("edSymLines", SYMPTOMS.map((s, i) => ({ name: s.n, color: SERIES[i], vals: symMean[i] })), { ymin: 0, ymax: symTop, yticks: ticksTo(symTop, 0.5), dec: 2, mt: 18, mb: 30 });
     lineChart("edSatChart", [{ name: SATIS[0].n, color: "var(--s2)", vals: SATIS[0].vals }, { name: SATIS[1].n, color: "var(--s5)", vals: SATIS[1].vals }], { ymin: 1, ymax: 5, yticks: [1, 2, 3, 4, 5], rlabel: true, dec: 1 });
     totalBars(); likert(); legends(); kpis();
   }
