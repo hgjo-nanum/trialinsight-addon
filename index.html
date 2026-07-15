@@ -308,8 +308,7 @@
   .epro-dash .ed-note b { color:#8a5a00; }
   .epro-dash .ed-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:14px; }
   .epro-dash .ed-card { background:#fff; border:1px solid var(--edborder); border-radius:12px; padding:14px 16px 16px; }
-  .epro-dash .ed-card h3 { font-size:13px; font-weight:700; margin:0; display:flex; align-items:center; gap:8px; color:#111827; }
-  .epro-dash .ed-card h3 .n { display:inline-grid; place-items:center; width:19px; height:19px; border-radius:6px; background:var(--s1); color:#fff; font-size:11px; font-weight:700; }
+  .epro-dash .ed-card h3 { margin:0 0 8px; padding:0 0 8px; border-bottom:1px solid var(--ti-border-soft); font-size:14px; font-weight:600; color:var(--ti-title); }
   .epro-dash .ed-card .cap { color:var(--edmuted); font-size:11px; margin:2px 0 10px; }
   .epro-dash .c3 { grid-column:span 3; } .epro-dash .c4 { grid-column:span 4; }
   .epro-dash .c6 { grid-column:span 6; } .epro-dash .c8 { grid-column:span 8; } .epro-dash .c12 { grid-column:span 12; }
@@ -716,20 +715,19 @@
         <!-- 설문 결과 (환자자기평가 e-PRO 결과 요약 대시보드) -->
         <div class="epro-panel" id="epro-results">
           <div class="epro-dash">
-            <div class="ed-note">환자자기평가결과(e-PRO) 결과 요약 · 평가시점 5 (Baseline·2·4·8·12주) · <b>예시(더미) 데이터 — 레이아웃 확인용</b></div>
             <div class="ed-grid">
               <div class="ed-card ed-kpi hero c3"><div class="lab">유효성 평가 대상자군</div><div class="val" id="edKpiN">–</div><div class="foot">안전성 평가군 6,540명 · 등록 6,842명</div></div>
               <div class="ed-card ed-kpi c3"><div class="lab">12주 소화성궤양 증상 발생률</div><div class="val" id="edKpiOcc">–</div><div class="delta" id="edKpiOccD"></div><div class="foot">베이스라인 대비 신규·악화</div></div>
               <div class="ed-card ed-kpi c3"><div class="lab">12주 증상 Total Score</div><div class="val" id="edKpiTotal">–</div><div class="delta" id="edKpiTotalD"></div><div class="foot">8개 증상 문항 합계 (낮을수록 양호)</div></div>
               <div class="ed-card ed-kpi c3"><div class="lab">12주 전반적 만족도</div><div class="val" id="edKpiSat">–</div><div class="delta" id="edKpiSatD"></div><div class="foot">문항 10 · 높을수록 만족</div></div>
 
-              <section class="ed-card c8"><h3><span class="n">③</span> 증상 설문 8개 문항 평균 점수 변화</h3><div class="cap">평가시점별 · 문항별 평균 (0=전혀 없음 · 4=매우 심함) · 낮을수록 양호</div><svg id="edSymLines" viewBox="0 0 720 300"></svg><div class="ed-legend" id="edSymLegend"></div></section>
-              <section class="ed-card c4"><h3><span class="n">④</span> 증상 평가 Total Score 평균</h3><div class="cap">8개 증상 문항 합계 · 0–32점 · 낮을수록 양호</div><svg id="edTotalBars" viewBox="0 0 340 300"></svg></section>
+              <section class="ed-card c8"><h3>증상 설문 8개 문항 평균 점수 변화</h3><div class="cap">평가시점별 · 문항별 평균 (0=전혀 없음 · 4=매우 심함) · 낮을수록 양호</div><svg id="edSymLines" viewBox="0 0 720 300"></svg><div class="ed-legend" id="edSymLegend"></div></section>
+              <section class="ed-card c4"><h3>증상 평가 Total Score 평균</h3><div class="cap">8개 증상 문항 합계 · 0–32점 · 낮을수록 양호</div><svg id="edTotalBars" viewBox="0 0 340 300"></svg></section>
 
-              <section class="ed-card c6"><h3><span class="n">②</span> 소화성궤양 증상 발생 비율</h3><div class="cap">베이스라인 대비 · 평가시점별 신규·악화 발생률(%)</div><svg id="edOccBars" viewBox="0 0 520 224"></svg></section>
-              <section class="ed-card c6 vcenter"><h3><span class="n">⑤</span> 만족도 문항 평균 점수</h3><div class="cap">문항 9·10 · 1–5점 · 높을수록 양호</div><svg id="edSatChart" viewBox="0 0 520 224"></svg><div class="ed-legend" id="edSatLegend"></div></section>
+              <section class="ed-card c6"><h3>소화성궤양 증상 발생 비율</h3><div class="cap">베이스라인 대비 · 평가시점별 신규·악화 발생률(%)</div><svg id="edOccBars" viewBox="0 0 520 224"></svg></section>
+              <section class="ed-card c6 vcenter"><h3>만족도 문항 평균 점수</h3><div class="cap">문항 9·10 · 1–5점 · 높을수록 양호</div><svg id="edSatChart" viewBox="0 0 520 224"></svg><div class="ed-legend" id="edSatLegend"></div></section>
 
-              <section class="ed-card c12"><h3><span class="n">①</span> 평가시점별 · 문항(10개)별 응답 분포</h3><div class="lk-head"><div class="ed-legend" id="edLkLegend"></div></div><div class="likert-grid" id="edLikert"></div></section>
+              <section class="ed-card c12"><h3>평가시점별 · 문항(10개)별 응답 분포</h3><div class="lk-head"><div class="ed-legend" id="edLkLegend"></div></div><div class="likert-grid" id="edLikert"></div></section>
             </div>
           </div>
         </div>
@@ -1088,14 +1086,14 @@ function renderEproStatus() {
 const EPRO_DASH = (function () {
   const TP = ["Baseline", "2주", "4주", "8주", "12주"];
   const SYMPTOMS = [
-    { n: "1. 상복부 통증", b: 1.6, alarm: false }, { n: "2. 속쓰림", b: 2.1, alarm: false },
-    { n: "3. 산역류", b: 1.8, alarm: false }, { n: "4. 공복통", b: 1.4, alarm: false },
-    { n: "5. 오심", b: 1.1, alarm: false }, { n: "6. 야간 통증", b: 1.3, alarm: false },
-    { n: "7. 변 이상", b: 0.3, alarm: true }, { n: "8. 체중 감소", b: 0.2, alarm: true },
+    { n: "상복부 통증", b: 1.6, alarm: false }, { n: "속쓰림", b: 2.1, alarm: false },
+    { n: "산역류", b: 1.8, alarm: false }, { n: "공복통", b: 1.4, alarm: false },
+    { n: "오심", b: 1.1, alarm: false }, { n: "야간 통증", b: 1.3, alarm: false },
+    { n: "변 이상", b: 0.3, alarm: true }, { n: "체중 감소", b: 0.2, alarm: true },
   ];
   const SATIS = [
-    { n: "9. 위장 불편으로 인한 미복용 빈도", vals: [3.4, 3.8, 4.1, 4.3, 4.5] },
-    { n: "10. 전반적 만족도", vals: [3.1, 3.7, 4.0, 4.3, 4.5] },
+    { n: "위장 불편으로 인한 미복용 빈도", vals: [3.4, 3.8, 4.1, 4.3, 4.5] },
+    { n: "전반적 만족도", vals: [3.1, 3.7, 4.0, 4.3, 4.5] },
   ];
   const SYM_DECAY = [1.00, 0.72, 0.55, 0.42, 0.33], ALARM_DECAY = [1.00, 0.95, 0.90, 0.88, 0.85];
   const OCC = [null, 8.4, 6.7, 5.2, 4.1];
@@ -1157,15 +1155,16 @@ const EPRO_DASH = (function () {
     items.push({ name: SATIS[0].n, scale: SCALE_Q9, means: SATIS[0].vals.map(v => 5 - v) });
     items.push({ name: SATIS[1].n, scale: SCALE_Q10, means: SATIS[1].vals.map(v => 5 - v) });
     const host = document.getElementById("edLikert");
-    items.forEach(it => {
+    items.forEach((it, i) => {
+      const label = (i + 1) + ". " + it.name;
       const p = document.createElement("div"); p.className = "lk-panel";
-      const ttl = document.createElement("div"); ttl.className = "lk-title"; ttl.textContent = it.name; p.appendChild(ttl);
+      const ttl = document.createElement("div"); ttl.className = "lk-title"; ttl.textContent = label; p.appendChild(ttl);
       it.means.forEach((m, ti) => {
         const dist = distFromMean(Math.max(0, Math.min(4, m)));
         const row = document.createElement("div"); row.className = "lk-row";
         const tp = document.createElement("div"); tp.className = "tp"; tp.textContent = TP[ti]; row.appendChild(tp);
         const bar = document.createElement("div"); bar.className = "lk-bar";
-        dist.forEach((pct, k) => { const seg = document.createElement("div"); seg.className = "lk-seg"; seg.style.flex = pct + " 0 0"; seg.style.background = LK[k]; if (pct < 0.5) seg.style.display = "none"; bindTip(seg, `<b>${it.name}</b> · ${TP[ti]}<br><span class="sw" style="background:${LK[k]}"></span>${it.scale[k]} · ${pct}%`); bar.appendChild(seg); });
+        dist.forEach((pct, k) => { const seg = document.createElement("div"); seg.className = "lk-seg"; seg.style.flex = pct + " 0 0"; seg.style.background = LK[k]; if (pct < 0.5) seg.style.display = "none"; bindTip(seg, `<b>${label}</b> · ${TP[ti]}<br><span class="sw" style="background:${LK[k]}"></span>${it.scale[k]} · ${pct}%`); bar.appendChild(seg); });
         row.appendChild(bar); p.appendChild(row);
       });
       host.appendChild(p);
@@ -1393,11 +1392,23 @@ document.querySelectorAll("#panel-epro .subtab").forEach(st => {
 });
 
 /* =================== NEWSLETTER PREVIEW (real PDF files) =================== */
+// data URI PDF는 Chrome이 iframe에서 차단하므로 Blob URL로 변환(단일본 지원). 상대경로는 그대로.
+function pdfSrc(file) {
+  if (!file.startsWith("data:")) return file;
+  pdfSrc._cache = pdfSrc._cache || {};
+  if (!pdfSrc._cache[file]) {
+    const bin = atob(file.split(",")[1]);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    pdfSrc._cache[file] = URL.createObjectURL(new Blob([arr], { type: "application/pdf" }));
+  }
+  return pdfSrc._cache[file];
+}
 function pdfViewerHTML(nl) {
   return `
   <div class="viewer">
     <div class="viewer-head"><div class="vh-title">${nl.vol}</div><div class="vh-date">${nl.date}</div></div>
-    <iframe class="pdf-frame" src="${nl.file}#view=Fit" title="${nl.vol} 뉴스레터"></iframe>
+    <iframe class="pdf-frame" src="${pdfSrc(nl.file)}#view=Fit" title="${nl.vol} 뉴스레터"></iframe>
   </div>`;
 }
 
